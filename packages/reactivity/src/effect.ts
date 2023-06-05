@@ -17,7 +17,7 @@ export function effect<T = VoidFunction>(
   options?: ReactiveEffectOptions
 ) {
   const effect = createReactiveEffect<T>(fn, options);
-  if (options.lazy) {
+  if (!options?.lazy) {
     effect?.();
   }
   return effect;
@@ -40,16 +40,19 @@ function createReactiveEffect<T>(
   options?: ReactiveEffectOptions
 ): VoidFunction {
   const effect = function reactiveEffect() {
-    try {
-      effectStack.push(effect);
-      activeEffect = effect;
-      fn?.();
-    } finally {
-      // 出栈
-      effectStack.pop();
-      // 判断是不是还有effect
-      const len = effectStack.length;
-      activeEffect = len > 0 ? effectStack[len - 1] : undefined;
+    if (!effectStack.includes(effect)) {
+      // 已经存在了effect
+      try {
+        effectStack.push(effect);
+        activeEffect = effect;
+        fn?.();
+      } finally {
+        // 出栈
+        effectStack.pop();
+        // 判断是不是还有effect
+        const len = effectStack.length;
+        activeEffect = len > 0 ? effectStack[len - 1] : undefined;
+      }
     }
   };
   // 添加effect特有属性
@@ -62,10 +65,27 @@ function createReactiveEffect<T>(
 
 // 定义effect
 // 收集effect 在获取数据的时候收集依赖
+let targetMap = new WeakMap<Target, any>();
 export function track(
   target: Target,
   type: TrackOpTypes,
   key: string | symbol
 ) {
-  console.log("收集成功");
+  if (!activeEffect) {
+    return;
+  }
+
+  // target ---> key ---> effect
+  // WeakMap(target, Map(key, Set[activeEffect]))
+  let depMap: Map<string | Symbol, Set<() => any>> = targetMap.get(target);
+  if (!depMap) {
+    targetMap.set(target, (depMap = new Map()));
+  }
+  let dep = depMap.get(key);
+  if (!dep) {
+    depMap.set(key, (dep = new Set()));
+  }
+  if (!dep.has(activeEffect)) {
+    dep.add(activeEffect);
+  }
 }

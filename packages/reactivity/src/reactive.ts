@@ -7,7 +7,7 @@ import {
 } from "./baseHandlers";
 
 export interface Target {
-  [key: string]: any;
+  [key: string | symbol]: any;
 }
 
 export const reactiveMap = new WeakMap<Target, any>();
