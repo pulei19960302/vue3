@@ -1,4 +1,10 @@
-import { isObject } from "@vue/shared";
+import {
+  hasOwn,
+  isArray,
+  isIntegerKey,
+  isObject,
+  hasChanged,
+} from "@vue/shared";
 import { reactive, readonly } from "./reactive";
 import { track } from "./effect";
 import { TrackOpTypes } from "./operations";
@@ -38,6 +44,30 @@ function createSetter(shallow = false) {
     value: any,
     receiver: object
   ) {
+    const oldValue = target[key];
+
+    // 原始值是数组，并且key是number （name[1] = 1） 这种形式的修改
+    // hadKey 就是用来判断在原始数据中存不存在以下为情况说明
+    /**
+     * originData = {name: '111'}
+     * update: originData.sex = '1'
+     * finalData = {name: '111', sex: '1'}
+     *
+     * originData = [1,2]
+     * update: originData[4] = '1'
+     * finalData = [1, 2, empty × 1,1]
+     */
+    const hadKey =
+      isArray(target) && isIntegerKey(key)
+        ? Number(key) < target.length
+        : hasOwn(target, key);
+
+    if (!hadKey) {
+      // 修改
+    } else if (hasChanged(value, oldValue)) {
+      // 新增
+    }
+
     const res = Reflect.set(target, key, value, receiver);
     return res;
   };

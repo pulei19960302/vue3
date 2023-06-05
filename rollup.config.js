@@ -52,10 +52,6 @@ function createConfig(buildType, output) {
   };
 }
 
-console.log(
-  pkgBuildOptions.map((format) => createConfig(format, outputConfigs[format]))
-);
-
 export default pkgBuildOptions.map((format) =>
   createConfig(format, outputConfigs[format])
 );
