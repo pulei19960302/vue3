@@ -6,6 +6,8 @@ export interface ReactiveEffectOptions {
   lazy?: boolean;
 }
 
+export type Dep = Set<() => any>;
+
 export let activeEffect: () => any | undefined;
 export let uid = 0;
 
@@ -66,10 +68,7 @@ function createReactiveEffect<T>(
 
 // 定义effect
 // 收集effect 在获取数据的时候收集依赖
-let targetMap = new WeakMap<
-  Target,
-  Map<string | Symbol | number, Set<() => any>>
->();
+let targetMap = new WeakMap<Target, Map<string | Symbol | number, Dep>>();
 export function track(
   target: Target,
   type: TrackOpTypes,
@@ -108,7 +107,7 @@ export function trigger(
     return;
   }
 
-  let deps: Array<Set<() => any> | undefined> = []; // 因为数组的原因需要对deps里面的进行过滤
+  let deps: Array<Dep | undefined> = []; // 因为数组的原因需要对deps里面的进行过滤
 
   // 数组修改长度 example: arr = [1,2] arr.length = 4
   if (key === "length" && isArray(target)) {
@@ -136,7 +135,7 @@ export function trigger(
   runEffects(deps);
 }
 
-function runEffects(deps: Array<Set<() => any> | undefined>) {
+function runEffects(deps: Array<Dep | undefined>) {
   const effects: Array<() => any> = [];
   for (const dep of deps) {
     if (dep) {
