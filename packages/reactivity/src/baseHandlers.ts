@@ -6,15 +6,14 @@ import {
   hasChanged,
 } from "@vue/shared";
 import { reactive, readonly } from "./reactive";
-import { track } from "./effect";
-import { TrackOpTypes } from "./operations";
+import { track, trigger } from "./effect";
+import { TrackOpTypes, TriggerOpTypes } from "./operations";
 import type { Target } from "./reactive";
 
 // 创建get
 function createGetter(isReadonly = false, shallow = false) {
   return function get(target: Target, key: string | symbol, receiver: object) {
     const res = Reflect.get(target, key, receiver);
-
     // 不是只读的 收集依赖
     if (!isReadonly) {
       //收集effect
@@ -22,7 +21,7 @@ function createGetter(isReadonly = false, shallow = false) {
     }
 
     // 不是浅层
-    if (!shallow) {
+    if (shallow) {
       return res;
     }
 
@@ -62,14 +61,15 @@ function createSetter(shallow = false) {
         ? Number(key) < target.length
         : hasOwn(target, key);
 
+    const result = Reflect.set(target, key, value, receiver); // 更改值
     if (!hadKey) {
-      // 修改
-    } else if (hasChanged(value, oldValue)) {
       // 新增
+      trigger(target, TriggerOpTypes.ADD, key, value);
+    } else if (hasChanged(value, oldValue)) {
+      // 修改
+      trigger(target, TriggerOpTypes.SET, key, value, oldValue);
     }
-
-    const res = Reflect.set(target, key, value, receiver);
-    return res;
+    return result;
   };
 }
 

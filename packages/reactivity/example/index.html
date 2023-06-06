@@ -7,17 +7,22 @@
     <title>Document</title>
   </head>
   <body>
+    <div id="root"></div>
     <script src="../dist/VueReactivity.global.js"></script>
 
     <script>
       const { reactive, readonly, effect } = VueReactivity;
       const a = reactive({
-        name: "111",
+        name: [1, 2, 3],
       });
 
       VueReactivity.effect(() => {
-        a.name;
+        document.getElementById("root").innerHTML = a.name;
       });
+
+      setTimeout(() => {
+        a.name.length = 1;
+      }, 2000);
     </script>
   </body>
 </html>

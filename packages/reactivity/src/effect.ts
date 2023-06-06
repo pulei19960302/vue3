@@ -1,5 +1,6 @@
 import { Target } from "./reactive";
-import { TrackOpTypes } from "./operations";
+import { TrackOpTypes, TriggerOpTypes } from "./operations";
+import { isArray, isIntegerKey } from "@vue/shared";
 
 export interface ReactiveEffectOptions {
   lazy?: boolean;
@@ -65,7 +66,10 @@ function createReactiveEffect<T>(
 
 // 定义effect
 // 收集effect 在获取数据的时候收集依赖
-let targetMap = new WeakMap<Target, any>();
+let targetMap = new WeakMap<
+  Target,
+  Map<string | Symbol | number, Set<() => any>>
+>();
 export function track(
   target: Target,
   type: TrackOpTypes,
@@ -77,7 +81,7 @@ export function track(
 
   // target ---> key ---> effect
   // WeakMap(target, Map(key, Set[activeEffect]))
-  let depMap: Map<string | Symbol, Set<() => any>> = targetMap.get(target);
+  let depMap = targetMap.get(target);
   if (!depMap) {
     targetMap.set(target, (depMap = new Map()));
   }
@@ -87,5 +91,59 @@ export function track(
   }
   if (!dep.has(activeEffect)) {
     dep.add(activeEffect);
+  }
+}
+
+// 触发更新 trigger 方法
+export function trigger(
+  target: Target,
+  type: TriggerOpTypes,
+  key: string | symbol | number,
+  newValue: any,
+  oldValue?: any
+) {
+  const depsMap = targetMap.get(target); // map结构
+  // 依赖不存在
+  if (!depsMap) {
+    return;
+  }
+
+  let deps: Array<Set<() => any> | undefined> = []; // 因为数组的原因需要对deps里面的进行过滤
+
+  // 数组修改长度 example: arr = [1,2] arr.length = 4
+  if (key === "length" && isArray(target)) {
+    const newLength = Number(newValue);
+    depsMap.forEach((dep, key) => {
+      // 修改了数组的length 所以这里要找到用length和数组长度的地方
+      if (key === "length" || (key as unknown as number) >= newLength) {
+        deps.push(dep);
+      }
+    });
+  } else {
+    // 添加对应的运行dep
+    if (key != undefined) {
+      deps.push(depsMap.get(key));
+    }
+    switch (type) {
+      case TriggerOpTypes.ADD:
+        // 数组新增数据 --> example: const a = reactive({name: [1,2]})  a.name[100] = 1
+        if (isArray(target) && isIntegerKey(key)) {
+          deps.push(depsMap.get("length"));
+        }
+    }
+  }
+  // 运行对应的依赖
+  runEffects(deps);
+}
+
+function runEffects(deps: Array<Set<() => any> | undefined>) {
+  const effects: Array<() => any> = [];
+  for (const dep of deps) {
+    if (dep) {
+      effects.push(...dep);
+    }
+  }
+  if (effects.length) {
+    effects.forEach((effect) => effect?.());
   }
 }

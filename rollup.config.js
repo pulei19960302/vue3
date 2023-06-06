@@ -32,8 +32,6 @@ const outputConfigs = {
 
 const pkgBuildOptions = packageOptions.formats || [];
 
-console.log(path.resolve("tsconfig.json"));
-
 function createConfig(buildType, output) {
   return {
     input: resolve("src/index.ts"),
