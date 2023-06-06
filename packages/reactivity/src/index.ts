@@ -7,4 +7,4 @@ export {
 
 export { effect } from "./effect";
 
-export { ref } from "./ref";
+export { ref, toRef } from "./ref";

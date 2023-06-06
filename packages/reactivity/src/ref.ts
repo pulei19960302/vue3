@@ -47,3 +47,34 @@ class RefImpl<T> {
     }
   }
 }
+
+export function toRef<T extends object, K extends keyof T>(
+  object: T,
+  key: K,
+  defaultValue?: T[K]
+) {
+  return new ObjectRefImpl(object, key, defaultValue);
+}
+
+class ObjectRefImpl<T extends object, K extends keyof T> {
+  public readonly __v_isRef = true;
+
+  private readonly _object: T;
+  private readonly _key: K;
+  private readonly _defaultValue: T[K];
+
+  constructor(_object: T, _key: K, _defaultValue?: T[K]) {
+    this._object = _object;
+    this._key = _key;
+    this._defaultValue = _defaultValue;
+  }
+
+  get value() {
+    const val = this._object[this._key];
+    return val === undefined ? (this._defaultValue as T[K]) : val;
+  }
+
+  set value(newValue: any) {
+    this._object[this._key] = newValue;
+  }
+}
