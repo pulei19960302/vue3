@@ -4,6 +4,7 @@ import { isArray, isIntegerKey } from "@vue/shared";
 
 export interface ReactiveEffectOptions {
   lazy?: boolean;
+  scheduler?: () => void;
 }
 
 export type Dep = Set<() => any>;
@@ -15,10 +16,7 @@ export let uid = 0;
  * 1、定义effect
  * 2、定义相关属性
  */
-export function effect<T = VoidFunction>(
-  fn: () => T,
-  options?: ReactiveEffectOptions
-) {
+export function effect<T>(fn: () => T, options?: ReactiveEffectOptions) {
   const effect = createReactiveEffect<T>(fn, options);
   if (!options?.lazy) {
     effect?.();
@@ -41,14 +39,14 @@ const effectStack = [];
 function createReactiveEffect<T>(
   fn: () => T,
   options?: ReactiveEffectOptions
-): VoidFunction {
+): () => T {
   const effect = function reactiveEffect() {
     if (!effectStack.includes(effect)) {
       // 已经存在了effect
       try {
         effectStack.push(effect);
         activeEffect = effect;
-        fn?.();
+        return fn?.();
       } finally {
         // 出栈
         effectStack.pop();
@@ -136,13 +134,19 @@ export function trigger(
 }
 
 function runEffects(deps: Array<Dep | undefined>) {
-  const effects: Array<() => any> = [];
+  const effects: Array<any> = [];
   for (const dep of deps) {
     if (dep) {
       effects.push(...dep);
     }
   }
   if (effects.length) {
-    effects.forEach((effect) => effect?.());
+    effects.forEach((effect) => {
+      if (effect?.options?.scheduler) {
+        effect?.options?.scheduler(effect);
+      } else {
+        effect?.();
+      }
+    });
   }
 }

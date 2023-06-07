@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script src="../dist/VueReactivity.global.js"></script>
+
+    <script>
+      const { reactive, readonly, effect, ref, toRef, toRefs, computed } =
+        VueReactivity;
+
+      const age = ref("name");
+
+      const finalAge = computed(() => {
+        return age.value + "111";
+      });
+
+      setTimeout(() => {
+        age.value = "1111";
+        console.log(finalAge.value);
+        age.value = "第二次修改";
+        console.log(finalAge.value);
+      }, 2000);
+    </script>
+  </body>
+</html>
