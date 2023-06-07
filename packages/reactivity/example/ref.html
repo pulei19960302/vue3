@@ -11,15 +11,20 @@
     <script src="../dist/VueReactivity.global.js"></script>
 
     <script>
-      const { reactive, readonly, effect, ref, toRef } = VueReactivity;
+      const { reactive, readonly, effect, ref, toRef, toRefs } = VueReactivity;
 
-      const nameRef = ref("11");
+      const testRef = reactive({
+        name: "2222",
+        sex: "1111",
+      });
 
-      const a = toRef({ name: 2222 }, "name");
+      const { name, sex } = toRefs(testRef);
 
-      nameRef.value = 2;
+      effect(() => {
+        console.log(name.value, sex.value);
+      });
 
-      console.log(a.value, "@@@@");
+      name.value = 2;
     </script>
   </body>
 </html>

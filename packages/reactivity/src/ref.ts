@@ -1,7 +1,7 @@
 import { track, trigger } from "./effect";
 import { TrackOpTypes, TriggerOpTypes } from "./operations";
 import type { Dep } from "./effect";
-import { hasChanged } from "@vue/shared";
+import { hasChanged, isArray } from "@vue/shared";
 
 export interface Ref<T = any> {
   value: T;
@@ -54,6 +54,15 @@ export function toRef<T extends object, K extends keyof T>(
   defaultValue?: T[K]
 ) {
   return new ObjectRefImpl(object, key, defaultValue);
+}
+
+export function toRefs<T extends object>(object: T) {
+  // const result: Record<string | symbol, Ref> = {};
+  const result: any = isArray(object) ? new Array(object.length) : {};
+  for (const key in object) {
+    result[key] = toRef(object, key);
+  }
+  return result;
 }
 
 class ObjectRefImpl<T extends object, K extends keyof T> {
