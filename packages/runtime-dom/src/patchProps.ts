@@ -6,7 +6,7 @@ import { patchAttr } from "./modules/attr";
 
 const nativeOnRE = /^on[a-z]/; // 判断是不是方法的正则
 //操作属性
-export const patchProp = (el, key, prevValue, nextValue) => {
+export const patchProps = (el, key, prevValue, nextValue) => {
   if (key === "class") {
     patchClass(el, nextValue);
     // 处理class逻辑
