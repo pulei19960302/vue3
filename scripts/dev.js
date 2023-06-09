@@ -17,6 +17,6 @@ function runParallel(item, buildFn) {
   return Promise.all(result);
 }
 
-runParallel("reactivity", build).then((res) => {
+runParallel("runtime-dom", build).then((res) => {
   console.log("构建成功");
 });

@@ -1,6 +1,5 @@
 import { effect } from "./effect";
 import { isFunction, NOOP } from "@vue/shared";
-import type { ReactiveEffectOptions } from "./effect";
 
 export type ComputedGetter<T> = (...args: any[]) => T;
 export type ComputedSetter<T> = (v: T) => void;
@@ -34,7 +33,6 @@ class ComputedRefImpl<T> {
   public readonly __v_isRef = true;
 
   public _dirty = true; // 默认执行
-  public _cacheable: boolean;
 
   private getter: ComputedGetter<T>;
   private setter: ComputedSetter<T>;
